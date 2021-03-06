@@ -8,6 +8,7 @@ class PermissionMixin(viewsets.ModelViewSet):
                           'create': [IsAdminUserOrReadOnly],
                           'destroy': [IsAdminUserOrReadOnly],
                           'retrieve': [permissions.AllowAny],
+                          'update': [IsAdminUserOrReadOnly],
                           'partial_update': [IsAdminUserOrReadOnly]} # patch
 
     def get_permissions(self):

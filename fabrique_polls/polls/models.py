@@ -79,7 +79,7 @@ class ChoiceAnswer(models.Model):
 
     user_id = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="id пользователя")
     question = models.ForeignKey(Question, related_name="choice_answer", on_delete=models.CASCADE, verbose_name="Вопрос")
-    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, verbose_name="Выбор пользователя")
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, verbose_name="Выбор пользователя", related_name="single_choice")
 
     class Meta:
         verbose_name = "Выбор пользователя"
@@ -90,10 +90,10 @@ class ChoiceAnswer(models.Model):
 
 class MultiChoiceAnswer(models.Model):
     
-    user_id = models.IntegerField()
+    user_id = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="id пользователя")
     choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, related_name="multi_choice_answer", on_delete=models.CASCADE)
 
     class Meta:
         constraints = [models.UniqueConstraint(
-            fields=["user_id", "choice"], name="unique_multu_choice_answer")]
+            fields=["user_id", "choice"], name="unique_multi_choice_answer")]

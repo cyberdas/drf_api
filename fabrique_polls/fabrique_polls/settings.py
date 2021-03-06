@@ -31,7 +31,6 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    'polls',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders'
+    'corsheaders',
+    'polls',
 ]
 
 MIDDLEWARE = [
@@ -85,9 +85,9 @@ DATABASES = {
 }
 
 REST_FRAMEWORK = {
-        'DEFAULT_PERMISSION_CLASSES': [
+        'DEFAULT_PERMISSION_CLASSES': (
             'rest_framework.permissions.AllowAny',
-        ],
+        ),
     }
 
 # Password validation

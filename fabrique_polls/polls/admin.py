@@ -3,6 +3,10 @@ from django.contrib import admin
 from .models import Poll, Question, Choice, TextAnswer, ChoiceAnswer, MultiChoiceAnswer
 
 
+class MultiChoiceAnswerAdmin(admin.ModelAdmin):
+    list_display = ("question", "user_id", "choice")
+
+
 class ChoiceAnswerAdmin(admin.ModelAdmin):
     list_display = ("question", "user_id", "choice")
 
@@ -42,3 +46,4 @@ admin.site.register(Choice, ChoiceAdmin)
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(TextAnswer, TextAnswerAdmin)
 admin.site.register(ChoiceAnswer, ChoiceAnswerAdmin)
+admin.site.register(MultiChoiceAnswer, MultiChoiceAnswerAdmin)

@@ -8,8 +8,9 @@ from .serializers import (PollsSerializer, QuestionsSerializer, ChoicesSerialize
                           TextAnswerSerializer, ChoiceAnswerSerializer, MultiChoiceAnswerSerializer)
 
 
-class PollsViewSet(PermissionMixin):
+class PollsViewSet(viewsets.ModelViewSet):
 
+    permission_classes = [IsAdminUserOrReadOnly]
     serializer_class = PollsSerializer
 
     def get_queryset(self):
@@ -18,8 +19,9 @@ class PollsViewSet(PermissionMixin):
         return Poll.objects.filter(active=True)
 
 
-class QuestionsViewSet(PermissionMixin):
+class QuestionsViewSet(viewsets.ModelViewSet):
 
+    permission_classes = [IsAdminUserOrReadOnly]
     serializer_class = QuestionsSerializer
  
     def get_queryset(self):
@@ -27,8 +29,9 @@ class QuestionsViewSet(PermissionMixin):
         return queryset
 
 
-class ChoicesViewSet(PermissionMixin):
+class ChoicesViewSet(viewsets.ModelViewSet):
 
+    serializer_class = [IsAdminUserOrReadOnly] 
     serializer_class = ChoicesSerializer
 
     def get_queryset(self):
@@ -47,7 +50,11 @@ class ChoiceAnswerViewSet(viewsets.ModelViewSet):
     permissions = [permissions.AllowAny]
     serializer_class = ChoiceAnswerSerializer
 
+
 class MultiChoiceAnswer(viewsets.ModelViewSet):
 
     permissions = [permissions.AllowAny]
     serializer_class = MultiChoiceAnswerSerializer
+
+    def perform_create(self, serializer):
+        return super().perform_create(serializer)
