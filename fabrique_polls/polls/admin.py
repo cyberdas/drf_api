@@ -1,6 +1,15 @@
 from django.contrib import admin
 
-from .models import Poll, Question, Choice
+from .models import Poll, Question, Choice, TextAnswer, ChoiceAnswer, MultiChoiceAnswer
+
+
+class ChoiceAnswerAdmin(admin.ModelAdmin):
+    list_display = ("question", "user_id", "choice")
+
+
+class TextAnswerAdmin(admin.ModelAdmin):
+    list_display = ("question", "user_id", "text")
+
 
 class ChoiceInline(admin.TabularInline):
     model = Choice
@@ -31,3 +40,5 @@ class QuestionAdmin(admin.ModelAdmin):
 admin.site.register(Poll, PollAdmin)
 admin.site.register(Choice, ChoiceAdmin)
 admin.site.register(Question, QuestionAdmin)
+admin.site.register(TextAnswer, TextAnswerAdmin)
+admin.site.register(ChoiceAnswer, ChoiceAnswerAdmin)

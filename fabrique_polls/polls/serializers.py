@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.utils import timezone
 from datetime import datetime
 
-from .models import Poll, Question, Choice
+from .models import (Poll, Question, Choice, TextAnswer, 
+                     ChoiceAnswer, MultiChoiceAnswer)
 
 
 class ChoicesSerializer(serializers.ModelSerializer):
@@ -11,6 +12,12 @@ class ChoicesSerializer(serializers.ModelSerializer):
         model = Choice
         fields = ("id", "text", "question")
         read_only_fields = ("id", )
+
+    def validate(self, data):
+        question_id = data["question"].id
+        if str(question_id) != self.context['request'].parser_context['kwargs']['question_id']:
+            raise serializers.ValidationError("Поле question должно соответсововать id вопроса")
+        return data
 
 
 class QuestionsSerializer(serializers.ModelSerializer):
@@ -21,6 +28,12 @@ class QuestionsSerializer(serializers.ModelSerializer):
         model = Question
         fields = ("id", "text", "question_type", "choices", "poll")
         read_only_fields = ("id", )
+
+    def validate(self, data):
+        poll_id = data["poll"].id
+        if str(poll_id) != self.context['request'].parser_context['kwargs']['poll_id']:
+            raise serializers.ValidationError("Поле poll должно соответсововать id опроса")
+        return data
 
 
 class PollsSerializer(serializers.ModelSerializer):
@@ -45,3 +58,26 @@ class PollsSerializer(serializers.ModelSerializer):
         if end <= start:
             raise serializers.ValidationError("Дата окончания должна быть после даты старта опроса")
         return data
+
+class TextAnswerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TextAnswer
+        fields = ("user_id", "question", "text")
+
+    # def validate_question(self, value):
+        # if question.type != Question.TXT
+
+class ChoiceAnswerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ChoiceAnswer
+        fields = ("user_id", "question", "choice")
+
+class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
+
+    choices = ChoicesSerializer(many=True)
+
+    class Meta:
+        model = MultiChoiceAnswer
+        fields = ("user_id", "question", "choices")

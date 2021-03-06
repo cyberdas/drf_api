@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
 
@@ -57,12 +58,42 @@ class Choice(models.Model):
         verbose_name = "Вариант ответа"
         verbose_name_plural = "Варианты ответов"
 
+    def __str__(self):
+        return f"{self.text}"
 
- # class Answer(models.Model):
+
+class TextAnswer(models.Model):
+
+    user_id = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="id пользователя")
+    question = models.ForeignKey(Question, related_name="answer", on_delete=models.CASCADE, verbose_name="Вопрос")
+    text = models.TextField(verbose_name="Текст ответа")
+
+    class Meta:
+        verbose_name = "Текстовый ответ пользователя"
+        verbose_name_plural = "Текстовые ответы пользователя"
+        constraints = [models.UniqueConstraint(
+            fields=["user_id", "question"], name="unique_text_answer")]
+
+
+class ChoiceAnswer(models.Model):
+
+    user_id = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="id пользователя")
+    question = models.ForeignKey(Question, related_name="choice_answer", on_delete=models.CASCADE, verbose_name="Вопрос")
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, verbose_name="Выбор пользователя")
+
+    class Meta:
+        verbose_name = "Выбор пользователя"
+        verbose_name_plural = "Выборы пользователя"
+        constraints = [models.UniqueConstraint(
+            fields=["user_id", "question"], name="unique_choice_answer")]
+
+
+class MultiChoiceAnswer(models.Model):
     
-    # poll
-    # question
-    # answer
-    # id
+    user_id = models.IntegerField()
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, related_name="multi_choice_answer", on_delete=models.CASCADE)
 
-# class Vote
+    class Meta:
+        constraints = [models.UniqueConstraint(
+            fields=["user_id", "choice"], name="unique_multu_choice_answer")]
