@@ -6,7 +6,7 @@ from . import views
 router = DefaultRouter()
 
 router.register("polls", views.PollsViewSet, basename="polls")
-router.register(r"polls/(?P<poll_id>\d+)/questions", views.QuestionsViewSet, basename="questions")  # все вопросы одного опроса
+router.register(r"polls/(?P<poll_id>\d+)/questions", views.QuestionsViewSet, basename="questions")
 router.register(r"polls/(?P<poll_id>\d+)/questions/(?P<question_id>\d+)/choices", views.ChoicesViewSet, basename="choices")
 router.register("polls-active", views.ActiveViewSet, basename="active_polls")
 router.register("polls-finished", views.FinishedViewSet, basename="finished_polls")

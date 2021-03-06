@@ -72,7 +72,7 @@ class PollsSerializer(serializers.ModelSerializer):
 class TextAnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = TextAnswer
+        model = TextAnswer # user_id будет read_only
         fields = ("user_id", "question", "text")
         validators = [
             UniqueTogetherValidator(
@@ -173,7 +173,7 @@ class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
         return {"user_id": user_id, "question": question, "choices": choices}
 
 
-class VotedPollSerializer(serializers.ModelSerializer):
+class FinishedPollSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Poll

@@ -60,7 +60,10 @@ class TextAnswerViewSet(viewsets.ModelViewSet):
     permissions = [permissions.AllowAny]
     serializer_class = TextAnswerSerializer
 
+    def perform_create(self, serializer_class):
+        pass
 
+    
 class ChoiceAnswerViewSet(viewsets.ModelViewSet):
 
     permissions = [permissions.AllowAny]
@@ -75,7 +78,7 @@ class MultiChoiceAnswer(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         return super().perform_create(serializer)
 
-
+# функция по ответу
 @api_view(["GET", "POST"])
 def test_func(request):
     a = 123
