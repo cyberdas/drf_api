@@ -11,7 +11,6 @@ class Poll(models.Model):
     start_date = models.DateTimeField(verbose_name='Дата создания')
     end_date = models.DateTimeField(verbose_name="Дата окончания")
     description = models.TextField(verbose_name="Описание")
-    active = models.BooleanField(default=True, verbose_name="активный")
 
     class Meta:
         verbose_name = "Опрос"

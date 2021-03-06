@@ -1,27 +1,43 @@
 from rest_framework import viewsets, permissions
+from django.utils import timezone
 
 from .models import (Poll, Question, Choice, 
                      TextAnswer, ChoiceAnswer, MultiChoiceAnswer)
 from .mixins import PermissionMixin
 from .permissions import IsAdminUserOrReadOnly
 from .serializers import (PollsSerializer, QuestionsSerializer, ChoicesSerializer, 
-                          TextAnswerSerializer, ChoiceAnswerSerializer, MultiChoiceAnswerSerializer)
+                          TextAnswerSerializer, ChoiceAnswerSerializer, MultiChoiceAnswerSerializer, ActiveSerializer)
+
+from rest_framework.decorators import api_view
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
+from rest_framework.response import Response
+
+class FinishedViewSet(viewsets.ModelViewSet):
+    pass
+
+
+class ActiveViewSet(viewsets.mixins.ListModelMixin, viewsets.GenericViewSet):
+    
+    serializer_class = PollsSerializer
+    permission_classes = [IsAdminUserOrReadOnly]
+    
+    def get_queryset(self):
+        date = timezone.now()
+        return Poll.objects.filter(end_date__gt=date)
 
 
 class PollsViewSet(viewsets.ModelViewSet):
 
-    permission_classes = [IsAdminUserOrReadOnly]
+    permission_classes = [permissions.AllowAny]
     serializer_class = PollsSerializer
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return Poll.objects.all()
-        return Poll.objects.filter(active=True)
+        return Poll.objects.all()
 
 
 class QuestionsViewSet(viewsets.ModelViewSet):
 
-    permission_classes = [IsAdminUserOrReadOnly]
+    permission_classes = [permissions.AllowAny]
     serializer_class = QuestionsSerializer
  
     def get_queryset(self):
@@ -31,7 +47,7 @@ class QuestionsViewSet(viewsets.ModelViewSet):
 
 class ChoicesViewSet(viewsets.ModelViewSet):
 
-    serializer_class = [IsAdminUserOrReadOnly] 
+    serializer_class = [permissions.AllowAny] 
     serializer_class = ChoicesSerializer
 
     def get_queryset(self):
@@ -58,3 +74,13 @@ class MultiChoiceAnswer(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         return super().perform_create(serializer)
+
+
+@api_view(["GET", "POST"])
+def test_func(request):
+    a = 123
+    if not request.session.exists(request.session.session_key):
+        request.session.create() 
+    request.session.save()
+    username = str(request.session.session_key) + '@dummy.com'
+    return Response(status=HTTP_200_OK)

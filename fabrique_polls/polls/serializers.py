@@ -1,10 +1,17 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from datetime import datetime
 
 from .models import (Poll, Question, Choice, TextAnswer, 
                      ChoiceAnswer, MultiChoiceAnswer)
+
+
+class ActiveSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Poll
+        fields = ["id", "description", "start_date", "end_date"]
 
 
 class ChoicesSerializer(serializers.ModelSerializer):
@@ -67,11 +74,22 @@ class TextAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = TextAnswer
         fields = ("user_id", "question", "text")
+        validators = [
+            UniqueTogetherValidator(
+                queryset=TextAnswer.objects.all(),
+                fields=["question", "user_id"],
+                message="Вы уже отвечали на этот вопрос"
+                )
+        ]
 
     def validate_question(self, value):
+        # username = str(self.request.session.session_key) + '@dummy.com'
+        # request = self.context.get("request")
+        # session = request.session.get("my_session")
         if value.question_type != Question.TXT:
             raise serializers.ValidationError("Ответ должен быть на вопрос типа Text")
         return value
+
 
 
 class ChoiceAnswerSerializer(serializers.ModelSerializer):
@@ -79,6 +97,13 @@ class ChoiceAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChoiceAnswer
         fields = ("user_id", "question", "choice")
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ChoiceAnswer.objects.all(),
+                fields=["question", "user_id"],
+                message="Вы уже отвечали на этот вопрос"
+                )
+        ]
 
     def validate_question(self, value):
         if value.question_type != Question.CHC:
@@ -94,25 +119,41 @@ class ChoiceAnswerSerializer(serializers.ModelSerializer):
             return data
 
 
-class MultiChoiceAnswerSerializer(serializers.Serializer):
+class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
 
     user_id = serializers.IntegerField()
-    choices = serializers.ListField(child=serializers.IntegerField())
-    question = serializers.IntegerField()
+    choices = serializers.ListField(child=serializers.CharField())
 
-    def to_internal_value(self, data):
-        choices = [int(i) for i in data["choices"].split(",")]
-        self.choices = choices
-        return data
+    class Meta:
+        model = MultiChoiceAnswer
+        fields = ["question", "user_id", "choices"]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=MultiChoiceAnswer.objects.all(),
+                fields=["question", "user_id"],
+                message="Вы уже отвечали на этот вопрос"
+                )
+        ]
+    # проблема в этом 
+    # def to_internal_value(self, data):
+        # choices = [int(i) for i in data["choices"].split(",")]
+        # self.choices = choices
+        # return data
 
-    def validate_question(self, value):
+    def validate_question(self, value): # questuion type потому что инт
         if value.question_type != Question.MCH:
-            raise serializers.ValidationError("Ответ должен быть на вопрос типа MultiChoiceChoice")
+            raise serializers.ValidationError("Ответ должен быть на вопрос типа MultiChoice")
         return value
 
     def validate_choices(self, value):
-        if len(self.choices) < 2:
-            raise serializers.ValidationError("Выберите несколько вариантов")
+        try:
+            choices = [int(i) for i in value[0].split(",")]
+        except ValueError:
+            raise serializers.ValidationError("Неверный формат ввода")
+        else:
+            if len(choices) < 2:
+                raise serializers.ValidationError("Выберите несколько вариантов")
+        self.choices = choices
         return value
 
     def validate(self, data):
@@ -126,7 +167,14 @@ class MultiChoiceAnswerSerializer(serializers.Serializer):
         choices = self.choices
         question = validated_data["question"]
         user_id = int(validated_data["user_id"])
-        objs = [MultiChoiceAnswer(choice_id=value, user_id=user_id, question_id=question)
+        objs = [MultiChoiceAnswer(choice_id=value, user_id=user_id, question_id=question.id)
             for value in choices]
         MultiChoiceAnswer.objects.bulk_create(objs)
         return {"user_id": user_id, "question": question, "choices": choices}
+
+
+class VotedPollSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Poll
+        fields = ""
