@@ -82,7 +82,7 @@ class ChoiceAnswer(models.Model):
 
     class Meta:
         verbose_name = "Выбор пользователя"
-        verbose_name_plural = "Выборы пользователя"
+        verbose_name_plural = "Выбор одного варианта"
         constraints = [models.UniqueConstraint(
             fields=["user_id", "question"], name="unique_choice_answer")]
 
@@ -94,5 +94,7 @@ class MultiChoiceAnswer(models.Model):
     question = models.ForeignKey(Question, related_name="multi_choice_answer", on_delete=models.CASCADE)
 
     class Meta:
+        verbose_name = "Выбор нескольких вариантов"
+        verbose_name_plural = "Выбор нескольких пользователей"
         constraints = [models.UniqueConstraint(
             fields=["user_id", "choice"], name="unique_multi_choice_answer")]

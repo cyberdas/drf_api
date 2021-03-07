@@ -7,13 +7,6 @@ from .models import (Poll, Question, Choice, TextAnswer,
                      ChoiceAnswer, MultiChoiceAnswer)
 
 
-class ActiveSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Poll
-        fields = ("id", "description", "start_date", "end_date")
-
-
 class ChoicesSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -72,17 +65,16 @@ class PollsSerializer(serializers.ModelSerializer):
 class TextAnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = TextAnswer # user_id будет read_only
+        model = TextAnswer
         fields = ("user_id", "question", "text")
-        read_only_fields = ("user_id", )
 
     def validate_question(self, value):
         if value.question_type != Question.TXT:
             raise serializers.ValidationError("Ответ должен быть на вопрос типа Text")
         return value
     
-    def validate_user_id(self, data, user_id):
-        user_id = user_id
+    def validate(self, data):
+        user_id = data["user_id"]
         question = data["question"]
         if TextAnswer.objects.filter(user_id=user_id, question=question).exists():
             raise serializers.ValidationError("Вы уже отвечали на этот вопрос")
@@ -95,21 +87,17 @@ class ChoiceAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChoiceAnswer
         fields = ("user_id", "question", "choice")
-        read_only_fields = ("user_id", )
 
     def validate_question(self, value):
         if value.question_type != Question.CHC:
             raise serializers.ValidationError("Ответ должен быть на вопрос типа Choice")
         return value
 
-    def validate_user_id(self, data, user_id):
-        user_id = user_id
+    def validate(self, data):
+        user_id = data["user_id"]
         question = data["question"]
         if ChoiceAnswer.objects.filter(user_id=user_id, question=question).exists():
             raise serializers.ValidationError("Вы уже отвечали на этот вопрос")
-        return data
-
-    def validate(self, data):
         try:
             choice = Choice.objects.get(pk=data["choice"].id, question=data["question"])
         except Choice.DoesNotExist:
@@ -120,13 +108,11 @@ class ChoiceAnswerSerializer(serializers.ModelSerializer):
 
 class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
 
-    user_id = serializers.IntegerField()
     choices = serializers.ListField(child=serializers.CharField())
 
     class Meta:
         model = MultiChoiceAnswer
         fields = ["question", "user_id", "choices"]
-        read_only_fields = ("user_id")
 
     def validate_question(self, value):
         if value.question_type != Question.MCH:
@@ -144,16 +130,13 @@ class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
         self.choices = choices
         return value
 
-    def validate_user_id(self, data, user_id):
-        user_id = user_id
+    def validate(self, data):
         question = data["question"]
+        user_id = data["user_id"]
         if MultiChoiceAnswer.objects.filter(user_id=user_id, question=question).exists():
             raise serializers.ValidationError("Вы уже отвечали на этот вопрос")
-        return data
-
-    def validate(self, data):
         try:
-           check = [Choice.objects.get(pk=value, question=data["question"]) for value in self.choices]
+           check = [Choice.objects.get(pk=value, question=question) for value in self.choices]
         except Choice.DoesNotExist:
             raise serializers.ValidationError("id одного из choices не принадлежить нужному вопросу")
         return data
@@ -161,15 +144,38 @@ class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         choices = self.choices
         question = validated_data["question"]
-        user_id = int(validated_data["user_id"])
+        user_id = validated_data["user_id"]
         objs = [MultiChoiceAnswer(choice_id=value, user_id=user_id, question_id=question.id)
             for value in choices]
         MultiChoiceAnswer.objects.bulk_create(objs)
         return {"user_id": user_id, "question": question, "choices": choices}
 
 
+class FinishedQuestionsSerializer(serializers.ModelSerializer):
+
+    choices = ChoicesSerializer(many=True, required=False)
+    answer = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Question
+        fields = ("id", "text", "choices", "answer")
+
+    def get_answer(self, obj):
+        user_id = self.context["request"]
+        result = []
+        if obj.question_type == Question.TXT:
+            answer = TextAnswer.objects.filter(question=obj, user_id=user_id)
+        return answer.text
+        # models = [TextAnswer, ChoiceAnswer, MultiChoiceAnswer]
+        # answer = [model.objects.filter(question=obj, user_id=user_id for model in models)]
+        return answers.text
+
+
 class FinishedPollSerializer(serializers.ModelSerializer):
+
+    questions = FinishedQuestionsSerializer(many=True, required=False)
+    user_id = serializers.IntegerField()
 
     class Meta:
         model = Poll
-        fields = ""
+        fields = ("title", "description", "questions", "user_id", )

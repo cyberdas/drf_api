@@ -1,20 +1,43 @@
-from rest_framework import viewsets, permissions
+from rest_framework.decorators import api_view
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED, 
+                                   HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND)
+from rest_framework import viewsets, permissions, mixins
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from django.db.models import Q, Exists
 from django.utils import timezone
 
 from .models import (Poll, Question, Choice, 
                      TextAnswer, ChoiceAnswer, MultiChoiceAnswer)
 from .mixins import PermissionMixin
 from .permissions import IsAdminUserOrReadOnly
-from .serializers import (PollsSerializer, QuestionsSerializer, ChoicesSerializer, 
-                          TextAnswerSerializer, ChoiceAnswerSerializer, MultiChoiceAnswerSerializer, ActiveSerializer)
-
-from rest_framework.decorators import api_view
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
-from rest_framework.response import Response
+from .serializers import (PollsSerializer, QuestionsSerializer, ChoicesSerializer, FinishedPollSerializer,
+                          TextAnswerSerializer, ChoiceAnswerSerializer, MultiChoiceAnswerSerializer)
+from .utils import get_answers, get_voted_polls
 
 
-class FinishedViewSet(viewsets.ModelViewSet):
-    pass
+
+
+# class FinishedViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    
+    # permission_classes = [permissions.AllowAny]
+    # serializer_class = FinishedPollSerializer
+
+    # def get_queryset(self):
+        # user_id = self.request["user_id"]
+        # test = Poll.objects.filter(questions__answer__user_id=user_id)
+        # b = Poll.objects.filter(questions__choice_answer__user_id=user_id)
+        # c = Poll.objects.filter(questions__multi_choice_answer__user_id=user_id)
+        # queryset = Poll.objects.filter(
+            #  questions__answer__user_id=user_id, 
+            # questions__choice_answer__user_id=user_id, 
+            # questions__multi_choice_answer__user_id=user_id)
+            # Q(questions__answer__user_id=user_id) 
+            #| Q(questions__choice_answer__user_id=user_id)
+            #| Q(questions__multi_choice_answer__user_id=user_id))
+        # if queryset.exists():
+            # return queryset
+        # raise ValidationError({"Ошибка": "Вы еще не прошли ни один опрос"})
 
 
 class ActiveViewSet(viewsets.mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -29,7 +52,7 @@ class ActiveViewSet(viewsets.mixins.ListModelMixin, viewsets.GenericViewSet):
 
 class PollsViewSet(viewsets.ModelViewSet):
 
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
     serializer_class = PollsSerializer
 
     def get_queryset(self):
@@ -38,7 +61,7 @@ class PollsViewSet(viewsets.ModelViewSet):
 
 class QuestionsViewSet(viewsets.ModelViewSet):
 
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
     serializer_class = QuestionsSerializer
  
     def get_queryset(self):
@@ -48,7 +71,7 @@ class QuestionsViewSet(viewsets.ModelViewSet):
 
 class ChoicesViewSet(viewsets.ModelViewSet):
 
-    serializer_class = [permissions.AllowAny] 
+    serializer_class = [permissions.IsAdminUser] 
     serializer_class = ChoicesSerializer
 
     def get_queryset(self):
@@ -56,68 +79,28 @@ class ChoicesViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class TextAnswerViewSet(viewsets.ModelViewSet):
-
-    permissions = [permissions.AllowAny]
-    serializer_class = TextAnswerSerializer
-
-    def perform_create(self, serializer_class):
-        # self.request.session["test"] = test
-        key = self.request.session.session_key
-        request = self.request.session.get("test")
-        a = 2
-        return request
-
-
-class ChoiceAnswerViewSet(viewsets.ModelViewSet):
-
-    permissions = [permissions.AllowAny]
-    serializer_class = ChoiceAnswerSerializer
-
-
-class MultiChoiceAnswer(viewsets.ModelViewSet):
-
-    permissions = [permissions.AllowAny]
-    serializer_class = MultiChoiceAnswerSerializer
-
-    def perform_create(self, serializer):
-        return super().perform_create(serializer)
-
-
 @api_view(["POST"])
 def text_answer(request):
-    user_id = request.session.get("user_id", None)
-    if not user_id:
-        request.session["user_id"] = 124124124124 # генерируемое число
-    serializer = TextAnswerSerializer(data=request.data)
-    if serializer.is_valid():
-            serializer.validate_user_id(data=request.data, user_id=user_id)
-            serializer.save(user_id=user_id)
-            return Response(serializer.data, status=HTTP_201_CREATED)
-    return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    serializer = TextAnswerSerializer
+    return get_answers(request, serializer)
 
 
 @api_view(["POST"])
 def choice_answer(request):
-    user_id = request.session.get("user_id", None)
-    if not user_id:
-        request.session["user_id"] = 124124124124 # генерируемое число
-    serializer = ChoiceAnswerSerializer(data=request.data)
-    if serializer.is_valid():
-            serializer.validate_user_id(data=request.data, user_id=user_id)
-            serializer.save(user_id=user_id)
-            return Response(serializer.data, status=HTTP_201_CREATED)
-    return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    serializer = ChoiceAnswerSerializer
+    return get_answers(request, serializer)
 
 
 @api_view(["POST"])
 def multi_choice_answer(request):
-    user_id = request.session.get("user_id", None)
-    if not user_id:
-        request.session["user_id"] = 124124124124 # генерируемое число
-    serializer = MultiChoiceAnswerSerializer(data=request.data)
-    if serializer.is_valid():
-            serializer.validate_user_id(data=request.data, user_id=user_id)
-            serializer.save(user_id=user_id)
-            return Response(serializer.data, status=HTTP_201_CREATED)
-    return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    serializer = MultiChoiceAnswerSerializer
+    return get_answers(request, serializer)
+
+
+@api_view(["POST"])
+def get_finished_polls(request):
+    voted_polls = get_voted_polls(request)  # будет возвращать queryset
+    if voted_polls.exists():
+        serializer = FinishedPollSerializer(data=voted_polls)
+        return Response(serializer.data, status=HTTP_200_OK)
+    raise ValidationError({"Ошибка": "Вы еще не прошли полностью ни один опрос"})

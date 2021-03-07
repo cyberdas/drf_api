@@ -33,7 +33,7 @@ class QuestionInline(admin.TabularInline):
 class PollAdmin(admin.ModelAdmin):
     inlines = (QuestionInline, )
     list_display = ("pk", "title", "description", "start_date")
-    readonly_fields = ["start_date"]
+    readonly_fields = ("start_date", )
 
 
 class QuestionAdmin(admin.ModelAdmin):
