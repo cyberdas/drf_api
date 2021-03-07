@@ -9,8 +9,9 @@ from .serializers import (PollsSerializer, QuestionsSerializer, ChoicesSerialize
                           TextAnswerSerializer, ChoiceAnswerSerializer, MultiChoiceAnswerSerializer, ActiveSerializer)
 
 from rest_framework.decorators import api_view
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.response import Response
+
 
 class FinishedViewSet(viewsets.ModelViewSet):
     pass
@@ -61,9 +62,13 @@ class TextAnswerViewSet(viewsets.ModelViewSet):
     serializer_class = TextAnswerSerializer
 
     def perform_create(self, serializer_class):
-        pass
+        # self.request.session["test"] = test
+        key = self.request.session.session_key
+        request = self.request.session.get("test")
+        a = 2
+        return request
 
-    
+
 class ChoiceAnswerViewSet(viewsets.ModelViewSet):
 
     permissions = [permissions.AllowAny]
@@ -78,12 +83,41 @@ class MultiChoiceAnswer(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         return super().perform_create(serializer)
 
-# функция по ответу
-@api_view(["GET", "POST"])
-def test_func(request):
-    a = 123
-    if not request.session.exists(request.session.session_key):
-        request.session.create() 
-    request.session.save()
-    username = str(request.session.session_key) + '@dummy.com'
-    return Response(status=HTTP_200_OK)
+
+@api_view(["POST"])
+def text_answer(request):
+    user_id = request.session.get("user_id", None)
+    if not user_id:
+        request.session["user_id"] = 124124124124 # генерируемое число
+    serializer = TextAnswerSerializer(data=request.data)
+    if serializer.is_valid():
+            serializer.validate_user_id(data=request.data, user_id=user_id)
+            serializer.save(user_id=user_id)
+            return Response(serializer.data, status=HTTP_201_CREATED)
+    return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def choice_answer(request):
+    user_id = request.session.get("user_id", None)
+    if not user_id:
+        request.session["user_id"] = 124124124124 # генерируемое число
+    serializer = ChoiceAnswerSerializer(data=request.data)
+    if serializer.is_valid():
+            serializer.validate_user_id(data=request.data, user_id=user_id)
+            serializer.save(user_id=user_id)
+            return Response(serializer.data, status=HTTP_201_CREATED)
+    return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def multi_choice_answer(request):
+    user_id = request.session.get("user_id", None)
+    if not user_id:
+        request.session["user_id"] = 124124124124 # генерируемое число
+    serializer = MultiChoiceAnswerSerializer(data=request.data)
+    if serializer.is_valid():
+            serializer.validate_user_id(data=request.data, user_id=user_id)
+            serializer.save(user_id=user_id)
+            return Response(serializer.data, status=HTTP_201_CREATED)
+    return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)

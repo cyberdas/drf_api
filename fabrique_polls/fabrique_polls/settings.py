@@ -129,4 +129,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_URLS_REGEX = r'^/api/.*$' 
+CORS_URLS_REGEX = r'^/api/.*$'
+SESSION_SAVE_EVERY_REQUEST = True

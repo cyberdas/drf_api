@@ -11,7 +11,7 @@ class ActiveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Poll
-        fields = ["id", "description", "start_date", "end_date"]
+        fields = ("id", "description", "start_date", "end_date")
 
 
 class ChoicesSerializer(serializers.ModelSerializer):
@@ -74,21 +74,19 @@ class TextAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = TextAnswer # user_id будет read_only
         fields = ("user_id", "question", "text")
-        validators = [
-            UniqueTogetherValidator(
-                queryset=TextAnswer.objects.all(),
-                fields=["question", "user_id"],
-                message="Вы уже отвечали на этот вопрос"
-                )
-        ]
+        read_only_fields = ("user_id", )
 
     def validate_question(self, value):
-        # username = str(self.request.session.session_key) + '@dummy.com'
-        # request = self.context.get("request")
-        # session = request.session.get("my_session")
         if value.question_type != Question.TXT:
             raise serializers.ValidationError("Ответ должен быть на вопрос типа Text")
         return value
+    
+    def validate_user_id(self, data, user_id):
+        user_id = user_id
+        question = data["question"]
+        if TextAnswer.objects.filter(user_id=user_id, question=question).exists():
+            raise serializers.ValidationError("Вы уже отвечали на этот вопрос")
+        return data
 
 
 
@@ -97,18 +95,19 @@ class ChoiceAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChoiceAnswer
         fields = ("user_id", "question", "choice")
-        validators = [
-            UniqueTogetherValidator(
-                queryset=ChoiceAnswer.objects.all(),
-                fields=["question", "user_id"],
-                message="Вы уже отвечали на этот вопрос"
-                )
-        ]
+        read_only_fields = ("user_id", )
 
     def validate_question(self, value):
         if value.question_type != Question.CHC:
             raise serializers.ValidationError("Ответ должен быть на вопрос типа Choice")
         return value
+
+    def validate_user_id(self, data, user_id):
+        user_id = user_id
+        question = data["question"]
+        if ChoiceAnswer.objects.filter(user_id=user_id, question=question).exists():
+            raise serializers.ValidationError("Вы уже отвечали на этот вопрос")
+        return data
 
     def validate(self, data):
         try:
@@ -127,20 +126,9 @@ class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = MultiChoiceAnswer
         fields = ["question", "user_id", "choices"]
-        validators = [
-            UniqueTogetherValidator(
-                queryset=MultiChoiceAnswer.objects.all(),
-                fields=["question", "user_id"],
-                message="Вы уже отвечали на этот вопрос"
-                )
-        ]
-    # проблема в этом 
-    # def to_internal_value(self, data):
-        # choices = [int(i) for i in data["choices"].split(",")]
-        # self.choices = choices
-        # return data
+        read_only_fields = ("user_id")
 
-    def validate_question(self, value): # questuion type потому что инт
+    def validate_question(self, value):
         if value.question_type != Question.MCH:
             raise serializers.ValidationError("Ответ должен быть на вопрос типа MultiChoice")
         return value
@@ -155,6 +143,13 @@ class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Выберите несколько вариантов")
         self.choices = choices
         return value
+
+    def validate_user_id(self, data, user_id):
+        user_id = user_id
+        question = data["question"]
+        if MultiChoiceAnswer.objects.filter(user_id=user_id, question=question).exists():
+            raise serializers.ValidationError("Вы уже отвечали на этот вопрос")
+        return data
 
     def validate(self, data):
         try:
