@@ -81,7 +81,6 @@ class TextAnswerSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class ChoiceAnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -154,28 +153,30 @@ class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
 class FinishedQuestionsSerializer(serializers.ModelSerializer):
 
     choices = ChoicesSerializer(many=True, required=False)
-    answer = serializers.SerializerMethodField()
+    answers = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ("id", "text", "choices", "answer")
+        fields = ("id", "text", "choices", "answers")
 
-    def get_answer(self, obj):
-        user_id = self.context["request"]
-        result = []
+    def get_answers(self, obj):
+        user_id = self.context["user_id"]
         if obj.question_type == Question.TXT:
-            answer = TextAnswer.objects.filter(question=obj, user_id=user_id)
-        return answer.text
-        # models = [TextAnswer, ChoiceAnswer, MultiChoiceAnswer]
-        # answer = [model.objects.filter(question=obj, user_id=user_id for model in models)]
-        return answers.text
+            answer = TextAnswer.objects.get(question=obj, user_id=user_id)
+            return answer.text
+        elif obj.question_type == Question.CHC:
+            answer = Choice.objects.get(question=obj, single_choice__user_id=user_id)
+            return answer.text
+        elif obj.question_type == Question.MCH:
+            answers = Choice.objects.filter(question=obj, multi_choices__user_id=user_id).values("text")
+            return answers
 
 
 class FinishedPollSerializer(serializers.ModelSerializer):
 
     questions = FinishedQuestionsSerializer(many=True, required=False)
-    user_id = serializers.IntegerField()
+    user_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Poll
-        fields = ("title", "description", "questions", "user_id", )
+        fields = ("title", "description", "questions", "user_id")

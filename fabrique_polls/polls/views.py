@@ -16,30 +16,6 @@ from .serializers import (PollsSerializer, QuestionsSerializer, ChoicesSerialize
 from .utils import get_answers, get_voted_polls
 
 
-
-
-# class FinishedViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    
-    # permission_classes = [permissions.AllowAny]
-    # serializer_class = FinishedPollSerializer
-
-    # def get_queryset(self):
-        # user_id = self.request["user_id"]
-        # test = Poll.objects.filter(questions__answer__user_id=user_id)
-        # b = Poll.objects.filter(questions__choice_answer__user_id=user_id)
-        # c = Poll.objects.filter(questions__multi_choice_answer__user_id=user_id)
-        # queryset = Poll.objects.filter(
-            #  questions__answer__user_id=user_id, 
-            # questions__choice_answer__user_id=user_id, 
-            # questions__multi_choice_answer__user_id=user_id)
-            # Q(questions__answer__user_id=user_id) 
-            #| Q(questions__choice_answer__user_id=user_id)
-            #| Q(questions__multi_choice_answer__user_id=user_id))
-        # if queryset.exists():
-            # return queryset
-        # raise ValidationError({"Ошибка": "Вы еще не прошли ни один опрос"})
-
-
 class ActiveViewSet(viewsets.mixins.ListModelMixin, viewsets.GenericViewSet):
     
     serializer_class = PollsSerializer
@@ -99,8 +75,11 @@ def multi_choice_answer(request):
 
 @api_view(["POST"])
 def get_finished_polls(request):
+    user_id =  request.POST.get("user_id", None)
+    if not user_id:
+        raise ValidationError({"Ошибка": "Передайте user_id"})
     voted_polls = get_voted_polls(request)  # будет возвращать queryset
     if voted_polls.exists():
-        serializer = FinishedPollSerializer(data=voted_polls)
+        serializer = FinishedPollSerializer(voted_polls, many=True, context={"user_id": user_id})
         return Response(serializer.data, status=HTTP_200_OK)
     raise ValidationError({"Ошибка": "Вы еще не прошли полностью ни один опрос"})

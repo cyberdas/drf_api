@@ -2,8 +2,6 @@ from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
 
-User = get_user_model()
-
 
 class Poll(models.Model):
     
@@ -90,11 +88,11 @@ class ChoiceAnswer(models.Model):
 class MultiChoiceAnswer(models.Model):
     
     user_id = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="id пользователя")
-    choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, related_name="multi_choices")
     question = models.ForeignKey(Question, related_name="multi_choice_answer", on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = "Выбор нескольких вариантов"
-        verbose_name_plural = "Выбор нескольких пользователей"
+        verbose_name_plural = "Выбор нескольких вариантов"
         constraints = [models.UniqueConstraint(
             fields=["user_id", "choice"], name="unique_multi_choice_answer")]

@@ -1,8 +1,8 @@
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.response import Response
-from django.db.models import Q, Exists
+from django.db.models import Q, Exists, OuterRef
 
-from . models import Poll
+from . models import Poll, Question
 
 
 def get_answers(request, serializer):
@@ -14,9 +14,12 @@ def get_answers(request, serializer):
 
 
 def get_voted_polls(request):
-	user_id = int(request.POST["user_id"])
-	queryset = Poll.objects.filter(
-		questions__answer__user_id=user_id).filter(
-		questions__choice_answer__user_id=user_id).filter(
-		questions__milti_choice_answer__user_id=user_id)
+	user_id = request.POST.get("user_id", None)
+	response_queryset = Poll.objects.filter(Q(questions__answer__user_id=user_id)
+                                   | Q(questions__choices__single_choice__user_id=user_id)
+                                   | Q(questions__choices__multi_choices__user_id=user_id))
+	no_response_queryset = Question.objects.filter(poll=OuterRef('pk')).exclude(Q(choices__single_choice__user_id=user_id)
+                                                                    | Q(answer__user_id=user_id)
+                                                                    | Q(choices__multi_choices__user_id=user_id))
+	queryset = response_queryset.exclude(Exists(no_response_queryset)).distinct()																
 	return queryset

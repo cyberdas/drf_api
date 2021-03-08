@@ -65,7 +65,7 @@ Api доступен по адресу /api/
 /api/polls-active/ - Все активные опросы
 /api/polls-finished/ - Пройденные опросы
 ```
-- Для ответа используйте подходящий путь
-Ответ текстом - api/text-answer/
-Выбор одного варианта - api/choice-answer/
-Выбор нескольких вариантов - api/multi-choice-answer/
+## Для ответа используйте подходящий путь
+- Ответ текстом - api/text-answer/
+- Выбор одного варианта - api/choice-answer/
+- Выбор нескольких вариантов - api/multi-choice-answer/
