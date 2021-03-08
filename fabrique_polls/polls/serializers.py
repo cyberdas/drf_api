@@ -1,9 +1,8 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
-from django.utils import timezone
-from django.shortcuts import get_object_or_404
 
-from .models import (Poll, Question, Choice, TextAnswer, 
+from django.utils import timezone
+
+from .models import (Poll, Question, Choice, TextAnswer,
                      ChoiceAnswer, MultiChoiceAnswer)
 
 
@@ -11,14 +10,8 @@ class ChoicesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Choice
-        fields = ("id", "text", "question")
+        fields = ("id", "text", )
         read_only_fields = ("id", )
-
-    def validate(self, data):
-        question_id = data["question"].id
-        if str(question_id) != self.context['request'].parser_context['kwargs']['question_id']:
-            raise serializers.ValidationError("Поле question должно соответсововать id вопроса")
-        return data
 
 
 class QuestionsSerializer(serializers.ModelSerializer):
@@ -27,14 +20,8 @@ class QuestionsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ("id", "text", "question_type", "choices", "poll")
+        fields = ("id", "text", "question_type", "choices", )
         read_only_fields = ("id", )
-
-    def validate(self, data):
-        poll_id = data["poll"].id
-        if str(poll_id) != self.context['request'].parser_context['kwargs']['poll_id']:
-            raise serializers.ValidationError("Поле poll должно соответсововать id опроса")
-        return data
 
 
 class PollsSerializer(serializers.ModelSerializer):
@@ -71,7 +58,7 @@ class TextAnswerSerializer(serializers.ModelSerializer):
         if value.question_type != Question.TXT:
             raise serializers.ValidationError("Ответ должен быть на вопрос типа Text")
         return value
-  
+
     def validate(self, data):
         user_id = data["user_id"]
         question = data["question"]

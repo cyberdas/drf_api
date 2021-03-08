@@ -1,8 +1,10 @@
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view
-from rest_framework.status import HTTP_200_OK
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK
+
 from django.utils import timezone
 
 from .models import Poll, Question, Choice
@@ -41,15 +43,23 @@ class QuestionsViewSet(viewsets.ModelViewSet):
         queryset = Question.objects.filter(poll_id=self.kwargs.get("poll_id"))
         return queryset
 
+    def perform_create(self, serializer):
+        poll = get_object_or_404(Poll, pk=self.kwargs.get("poll_id"))
+        serializer.save(poll=poll)
+
 
 class ChoicesViewSet(viewsets.ModelViewSet):
 
-    serializer_class = [permissions.IsAdminUser] 
+    serializer_class = [permissions.IsAdminUser]
     serializer_class = ChoicesSerializer
 
     def get_queryset(self):
         queryset = Choice.objects.filter(question_id=self.kwargs.get("question_id"))
         return queryset
+
+    def perform_create(self, seralizer):
+        question = get_object_or_404(Question, pk=self.kwargs.get("question_id"))
+        seralizer.save(question=question)
 
 
 @api_view(["POST"])
