@@ -22,7 +22,7 @@ class ChoicesSerializer(serializers.ModelSerializer):
 
 
 class QuestionsSerializer(serializers.ModelSerializer):
-    
+
     choices = ChoicesSerializer(many=True, required=False)
 
     class Meta:
@@ -45,7 +45,6 @@ class PollsSerializer(serializers.ModelSerializer):
         model = Poll
         fields = ("id", "title", "start_date", "end_date", "description", "questions", )
         read_only_fields = ("id", )
-
 
     def validate_start_date(self, value):
         if self.instance and self.instance.start_date:
@@ -72,7 +71,7 @@ class TextAnswerSerializer(serializers.ModelSerializer):
         if value.question_type != Question.TXT:
             raise serializers.ValidationError("Ответ должен быть на вопрос типа Text")
         return value
-    
+  
     def validate(self, data):
         user_id = data["user_id"]
         question = data["question"]
@@ -98,7 +97,7 @@ class ChoiceAnswerSerializer(serializers.ModelSerializer):
         if ChoiceAnswer.objects.filter(user_id=user_id, question=question).exists():
             raise serializers.ValidationError("Вы уже отвечали на этот вопрос")
         try:
-            choice = Choice.objects.get(pk=data["choice"].id, question=data["question"])
+            Choice.objects.get(pk=data["choice"].id, question=data["question"])
         except Choice.DoesNotExist:
             raise serializers.ValidationError("id choice должно должно принадлежать к конкретному вопросу")
         else:
@@ -135,7 +134,7 @@ class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
         if MultiChoiceAnswer.objects.filter(user_id=user_id, question=question).exists():
             raise serializers.ValidationError("Вы уже отвечали на этот вопрос")
         try:
-           check = [Choice.objects.get(pk=value, question=question) for value in self.choices]
+            [Choice.objects.get(pk=value, question=question) for value in self.choices]
         except Choice.DoesNotExist:
             raise serializers.ValidationError("id одного из choices не принадлежить нужному вопросу")
         return data
@@ -145,7 +144,7 @@ class MultiChoiceAnswerSerializer(serializers.ModelSerializer):
         question = validated_data["question"]
         user_id = validated_data["user_id"]
         objs = [MultiChoiceAnswer(choice_id=value, user_id=user_id, question_id=question.id)
-            for value in choices]
+                for value in choices]
         MultiChoiceAnswer.objects.bulk_create(objs)
         return {"user_id": user_id, "question": question, "choices": choices}
 

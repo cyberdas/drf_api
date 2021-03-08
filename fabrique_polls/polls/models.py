@@ -1,10 +1,9 @@
 from django.core.validators import MinValueValidator
-from django.contrib.auth import get_user_model
 from django.db import models
 
 
 class Poll(models.Model):
-    
+
     title = models.CharField(max_length=200, verbose_name="Название опроса")
     start_date = models.DateTimeField(verbose_name='Дата создания')
     end_date = models.DateTimeField(verbose_name="Дата окончания")
@@ -22,7 +21,7 @@ class Question(models.Model):
 
     TXT = "Text"
     CHC = "Choice"
-    MCH = "Multichoice" 
+    MCH = "Multichoice"
     choices = [
         (TXT, "Ответьте текстом"),
         (CHC, "Выберите один вариант"),
@@ -30,10 +29,10 @@ class Question(models.Model):
     ]
     text = models.TextField(verbose_name="Текст вопроса")
     poll = models.ForeignKey(
-        Poll, related_name="questions", 
+        Poll, related_name="questions",
         on_delete=models.CASCADE, verbose_name="Опрос")
     question_type = models.CharField(
-        max_length=11, choices=choices, 
+        max_length=11, choices=choices,
         verbose_name="Тип вопроса")
 
     class Meta:
@@ -45,9 +44,9 @@ class Question(models.Model):
 
 
 class Choice(models.Model):
-    
+
     question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, 
+        Question, on_delete=models.CASCADE,
         related_name="choices", verbose_name="Вопрос")
     text = models.CharField(max_length=64, verbose_name="Текст")
 
@@ -61,8 +60,11 @@ class Choice(models.Model):
 
 class TextAnswer(models.Model):
 
-    user_id = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="id пользователя")
-    question = models.ForeignKey(Question, related_name="answer", on_delete=models.CASCADE, verbose_name="Вопрос")
+    user_id = models.IntegerField(
+        validators=[MinValueValidator(1)], verbose_name="id пользователя")
+    question = models.ForeignKey(
+        Question, related_name="answer",
+        on_delete=models.CASCADE, verbose_name="Вопрос")
     text = models.TextField(verbose_name="Текст ответа")
 
     class Meta:
@@ -74,9 +76,14 @@ class TextAnswer(models.Model):
 
 class ChoiceAnswer(models.Model):
 
-    user_id = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="id пользователя")
-    question = models.ForeignKey(Question, related_name="choice_answer", on_delete=models.CASCADE, verbose_name="Вопрос")
-    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, verbose_name="Выбор пользователя", related_name="single_choice")
+    user_id = models.IntegerField(
+        validators=[MinValueValidator(1)], verbose_name="id пользователя")
+    question = models.ForeignKey(
+        Question, related_name="choice_answer", on_delete=models.CASCADE,
+        verbose_name="Вопрос")
+    choice = models.ForeignKey(
+        Choice, on_delete=models.CASCADE,
+        verbose_name="Выбор пользователя", related_name="single_choice")
 
     class Meta:
         verbose_name = "Выбор пользователя"
@@ -86,10 +93,13 @@ class ChoiceAnswer(models.Model):
 
 
 class MultiChoiceAnswer(models.Model):
-    
-    user_id = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="id пользователя")
-    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, related_name="multi_choices")
-    question = models.ForeignKey(Question, related_name="multi_choice_answer", on_delete=models.CASCADE)
+
+    user_id = models.IntegerField(
+        validators=[MinValueValidator(1)], verbose_name="id пользователя")
+    choice = models.ForeignKey(
+        Choice, on_delete=models.CASCADE, related_name="multi_choices")
+    question = models.ForeignKey(
+        Question, related_name="multi_choice_answer", on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = "Выбор нескольких вариантов"
