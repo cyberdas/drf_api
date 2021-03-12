@@ -85,7 +85,7 @@ def get_finished_polls(request):
     user_id = request.POST.get("user_id", None)
     if not user_id:
         raise ValidationError({"Ошибка": "Передайте user_id"})
-    voted_polls = get_voted_polls(request)  # будет возвращать queryset
+    voted_polls = get_voted_polls(request)
     if voted_polls.exists():
         serializer = FinishedPollSerializer(
             voted_polls, many=True, context={"user_id": user_id})
