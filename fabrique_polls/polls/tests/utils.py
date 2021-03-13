@@ -15,17 +15,17 @@ def create_poll():
 
 def create_questions():
     poll = create_poll()
-    Question.objects.create(
-        text="Текст", poll=poll, question_type="Text"
-    )
-    Question.objects.create(
-        text="Вопрос с выбором", poll=poll, question_type="Choice"
-    )
-    Question.objects.create(
-        text="Несколько выборов", poll=poll, question_type="Multichoice"
-    )
+    questions = [
+        Question.objects.create(text="Текст", poll=poll, question_type="Text"),
+        Question.objects.create(text="Вопрос с выбором", poll=poll, question_type="Choice"),
+        Question.objects.create(text="Несколько выборов", poll=poll, question_type="Multichoice")
+    ]
+    return questions
 
 
 def create_choices():
     questions = create_questions()
-    pass
+    for question in questions[1:]:
+        Choice.objects.create(text="Выбор", question=question)
+        Choice.objects.create(text="Второй выбор", question=question)
+        Choice.objects.create(text="Третий выбор", question=question)

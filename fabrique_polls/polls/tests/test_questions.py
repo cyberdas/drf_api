@@ -19,7 +19,6 @@ class QuestionsViewSetTest(APITestCase):
     def test_questions_list_admin(self):
         response = self.client.get(reverse(
             "questions-list", kwargs={"poll_id": 1}))
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_questions_list_user(self):

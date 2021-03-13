@@ -42,6 +42,7 @@ class PollsViewSetTest(APITestCase):   # в APITesTCase self.client = ApiClient(
         response = self.client.patch(
             reverse("polls-detail", kwargs={"pk": 1}), data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("Новое название", response.data["title"])
 
     def test_polls_detail_admin(self):
         response = self.client.get(reverse("polls-detail", kwargs={"pk": 1}))

@@ -50,7 +50,7 @@ class QuestionsViewSet(viewsets.ModelViewSet):
 
 class ChoicesViewSet(viewsets.ModelViewSet):
 
-    serializer_class = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAdminUser]
     serializer_class = ChoicesSerializer
 
     def get_queryset(self):
